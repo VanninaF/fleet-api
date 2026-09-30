@@ -289,3 +289,7 @@ def fleet_summary(
             1 for lvl in levels if is_low_battery(lvl, threshold_pct)
         ),
     }
+
+
+def badly_formatted(x, y):
+    return x + y
