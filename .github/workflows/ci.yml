@@ -13,13 +13,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
-
-      - name: Install dependencies
-        run: uv sync
+      - name: Setup
+        uses: ./.github/actions/setup
 
       - name: Ruff check
         run: uv run ruff check .
@@ -37,14 +32,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
-          enable-cache: true
           python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv sync
 
       - name: Run tests
         run: uv run pytest -v --cov=fleet_api --cov-report=html
@@ -62,10 +53,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
+      - name: Setup
+        uses: ./.github/actions/setup
 
       - name: Build package
         run: uv build
