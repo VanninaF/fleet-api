@@ -29,7 +29,7 @@ def test_battery_percentage_bornes_et_cas_nominal():
     """La conversion est linéaire et bornée à [0, 100]."""
     assert battery_percentage(12_600) == 100.0
     assert battery_percentage(10_500) == 0.0
-    assert battery_percentage(11_550) == 50.0
+    assert battery_percentage(11_550) == 42.0  # cassé volontairement (TD2 étape 4)
     # Hors bornes : on sature, on ne dépasse pas.
     assert battery_percentage(13_000) == 100.0
     assert battery_percentage(9_000) == 0.0
