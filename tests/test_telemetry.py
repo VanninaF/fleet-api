@@ -71,6 +71,7 @@ def test_battery_percentage_rejette_des_bornes_incoherentes():
 # Trois de ces fonctions ne respectent pas leur spécification.
 # ---------------------------------------------------------------------------
 
+
 def test_is_low_battery():
     """Test de la fonction is_low_battery."""
 
@@ -80,11 +81,12 @@ def test_is_low_battery():
     assert is_low_battery(60) is False
     # Cas limite : batterie exactement au seuil
     assert is_low_battery(20) is True
-    
+
+
 def test_path_length_m():
     """Test de la fonction path_length_m."""
-    
-    # Cas nominal : chemin avec deux positions 
+
+    # Cas nominal : chemin avec deux positions
     positions = [Position(1, 1), Position(4, 5)]
     assert path_length_m(positions) == pytest.approx(5.0)
     # Cas nominal : chemin avec plusieurs positions
@@ -99,10 +101,11 @@ def test_path_length_m():
     # Cas limite : chemin vide
     positions = []
     assert path_length_m(positions) == 0.0
-    
+
+
 def test_average_speed_mps():
     """Test de la fonction average_speed_mps."""
-    
+
     # Cas nominal : vitesse moyenne avec deux positions et un temps positif
     assert average_speed_mps(10.0, 5.0) == pytest.approx(2.0)
     # Cas limite : temps nul
@@ -110,9 +113,10 @@ def test_average_speed_mps():
     # Cas limite : temps négatif
     assert average_speed_mps(10.0, -5.0) is None
 
+
 def test_estimate_runtime_minutes():
     """Test de la fonction estimate_runtime_minutes."""
-    
+
     # Cas nominal : batterie à 50% et consommation de 5% par minute
     assert estimate_runtime_minutes(50.0, 5.0) == pytest.approx(10.0)
     # Cas limite : batterie à 0%
@@ -121,8 +125,8 @@ def test_estimate_runtime_minutes():
     assert estimate_runtime_minutes(50.0, 0.0) is None
     # Cas limite : consommation négative
     assert estimate_runtime_minutes(50.0, -5.0) is None
-    
-    
+
+
 def _reading(
     voltage_mv: int, timestamp_s: float = 0.0, is_charging: bool = False
 ) -> Reading:
@@ -135,9 +139,10 @@ def _reading(
         is_charging=is_charging,
     )
 
+
 def test_median_voltage_mv():
     """Test de la fonction median_voltage_mv."""
-    
+
     # Cas nominal : liste avec un nombre impair d'éléments
     readings = [_reading(12000), _reading(11000), _reading(13000)]
     assert median_voltage_mv(readings) == 12000
@@ -146,10 +151,11 @@ def test_median_voltage_mv():
     assert median_voltage_mv(readings) == pytest.approx(12250.0)
     # Cas limite : liste vide
     assert median_voltage_mv([]) is None
-    
+
+
 def test_robot_state():
     """Test de la fonction robot_state."""
-    
+
     # 1. Cas nominal : rien à signaler
     reading = _reading(voltage_mv=12000, timestamp_s=0.0, is_charging=False)
     assert robot_state(reading, now_s=50.0) == RobotState.OPERATIONAL
@@ -182,9 +188,10 @@ def test_robot_state():
     reading = _reading(voltage_mv=12000, timestamp_s=0.0, is_charging=False)
     assert robot_state(reading, now_s=120.0) == RobotState.OPERATIONAL
 
+
 def test_detect_voltage_dropouts():
     """Test de la fonction detect_voltage_dropouts."""
-    
+
     # Cas nominal : détection de deux chutes de tension
     readings = [
         _reading(voltage_mv=12000),
@@ -194,7 +201,7 @@ def test_detect_voltage_dropouts():
         _reading(voltage_mv=12000),
     ]
     assert detect_voltage_dropouts(readings, max_drop_mv=1500) == [3]
-    
+
     # Cas limite : aucune chute de tension
     readings = [
         _reading(voltage_mv=12000),
@@ -202,10 +209,11 @@ def test_detect_voltage_dropouts():
         _reading(voltage_mv=11800),
     ]
     assert detect_voltage_dropouts(readings, max_drop_mv=1500) == []
-    
+
     # Cas limite : liste vide
     assert detect_voltage_dropouts([], max_drop_mv=1500) == []
-    
+
+
 def test_fleet_summary():
     """Test de la fonction fleet_summary."""
 
