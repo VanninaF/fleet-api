@@ -68,8 +68,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          sbom: true
-          provenance: mode=max
+          # Les attestations produisent une manifest-list, que l'exporter
+          # docker (utilisé par load: true, sur PR) ne sait pas exporter.
+          # Elles n'ont de sens qu'une fois l'image réellement publiée.
+          sbom: ${{ github.event_name != 'pull_request' }}
+          provenance: ${{ github.event_name != 'pull_request' && 'mode=max' }}
 
       - uses: aquasecurity/trivy-action@v0.36.0
         with:
