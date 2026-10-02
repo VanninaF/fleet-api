@@ -40,3 +40,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/vanninaf/fleet-api:sha-${{ github.sha }}
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          exit-code: "1"
