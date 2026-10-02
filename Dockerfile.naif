@@ -1,0 +1,6 @@
+FROM python:3.14-slim-trixie
+WORKDIR /app
+COPY . .
+RUN pip install uv && uv sync
+CMD ["/app/.venv/bin/uvicorn", "fleet_api.api:app", "--host", "0.0.0.0"]
+EXPOSE 8000

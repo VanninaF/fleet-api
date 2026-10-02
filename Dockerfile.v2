@@ -1,0 +1,13 @@
+FROM python:3.14-slim-trixie
+WORKDIR /app
+RUN pip install uv
+
+# (1) les dépendances seules : la couche lourde
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --locked --no-install-project
+
+# (2) le code, puis le projet
+COPY src ./src
+RUN uv sync --locked
+CMD ["/app/.venv/bin/uvicorn", "fleet_api.api:app", "--host", "0.0.0.0"]
+EXPOSE 8000

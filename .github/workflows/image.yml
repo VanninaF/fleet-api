@@ -1,0 +1,82 @@
+name: Image
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: fleet
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d fleet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://app:app@localhost:5432/fleet
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: uv run pytest -m integration -v
+
+  image:
+    needs: integration
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Connexion à GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Les attestations produisent une manifest-list, que l'exporter
+          # docker (utilisé par load: true, sur PR) ne sait pas exporter.
+          # Elles n'ont de sens qu'une fois l'image réellement publiée.
+          sbom: ${{ github.event_name != 'pull_request' }}
+          provenance: ${{ github.event_name != 'pull_request' && 'mode=max' }}
+
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/vanninaf/fleet-api:sha-${{ github.sha }}
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          exit-code: "1"

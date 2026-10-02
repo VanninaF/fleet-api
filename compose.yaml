@@ -1,0 +1,45 @@
+# Environnement de développement local : l'API et sa base de données.
+#
+#   docker compose up --build
+#   curl http://localhost:8000/health
+#   docker compose down -v          (le -v supprime aussi le volume)
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: fleet
+    ports:
+      - "5432:5432"
+    volumes:
+      # PostgreSQL 18+ : le point de montage a changé. PGDATA vaut désormais
+      # /var/lib/postgresql/18/docker, et le volume se monte un cran au-dessus.
+      # Monter /var/lib/postgresql/data (la convention d'avant) fait échouer
+      # le démarrage avec « unused mount/volume ».
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      # Sans ce healthcheck, l'API démarre avant que PostgreSQL n'accepte
+      # les connexions, et échoue une fois sur deux.
+      test: ["CMD-SHELL", "pg_isready -U app -d fleet"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://app:app@db:5432/fleet
+    ports:
+      - "8000:8000"
+    depends_on: [db]
+      # db:
+        # « démarré » ne suffit pas : on attend « en bonne santé ».
+        # condition: service_healthy
+
+volumes:
+  pgdata:
