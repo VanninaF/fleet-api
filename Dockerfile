@@ -18,6 +18,16 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-editable
 
 FROM python:3.14-slim-trixie
+
+# (1) Les mises à jour de sécurité Debian publiées depuis la construction
+#     de l'image de base.
+RUN apt-get update && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# (2) Une image de production n'installe rien au démarrage : pip est
+#     inutile, et il embarque ses propres dépendances vendorisées.
+RUN python -m pip uninstall -y pip
+
 RUN groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app \
     --no-create-home --shell /usr/sbin/nologin app
