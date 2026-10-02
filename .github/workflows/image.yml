@@ -2,7 +2,35 @@ name: Image
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
+  integration:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: fleet
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d fleet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://app:app@localhost:5432/fleet
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: uv run pytest -m integration -v
+
   image:
+    needs: integration
     runs-on: ubuntu-latest
     permissions:
       contents: read
